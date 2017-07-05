@@ -2,7 +2,7 @@ from layer import *
 
 
 class CycleGANModel:
-    def __init__(self, batch_size=64):
+    def __init__(self, batch_size=64, with_identity_loss=False):
 
         self.noise_size = 100
         self.cond_size = 5
@@ -97,7 +97,7 @@ class CycleGANModel:
         self.fake_pool_disc_b_t = discriminator(input_t=self.fake_pool_image_b_ph, name="discriminator_b", reuse=True)
 
         # NOTE Build loss functions
-        self.build_loss()
+        self.build_loss(with_identity_loss)
 
         # NOTE build optimizers
         optimizer = tf.train.AdamOptimizer
@@ -401,7 +401,7 @@ class CycleGANModel:
 
         return output_t
 
-    def build_loss(self):
+    def build_loss(self, with_identity_loss):
         scale_factor = 10.0
         self.cyc_loss = tf.reduce_mean(tf.abs(self.real_image_a_t - self.cyc_image_a_t)) \
             + tf.reduce_mean(tf.abs(self.real_image_b_t - self.cyc_image_b_t))
@@ -409,6 +409,10 @@ class CycleGANModel:
         label = 0.9
         self.gen_loss_a = self.cyc_loss * scale_factor + tf.reduce_mean(tf.squared_difference(self.fake_disc_b_t, label))
         self.gen_loss_b = self.cyc_loss * scale_factor + tf.reduce_mean(tf.squared_difference(self.fake_disc_a_t, label))
+
+        if with_identity_loss:
+            self.gen_loss_a += tf.reduce_mean(tf.abs(self.real_image_a_t - self.fake_image_b_t))
+            self.gen_loss_b += tf.reduce_mean(tf.abs(self.real_image_b_t - self.fake_image_a_t))
 
         self.disc_loss_a = (tf.reduce_mean(tf.square(self.fake_pool_disc_a_t)) + tf.reduce_mean(tf.squared_difference(self.real_disc_a_t, label)))/2.0
         self.disc_loss_b = (tf.reduce_mean(tf.square(self.fake_pool_disc_b_t)) + tf.reduce_mean(tf.squared_difference(self.real_disc_b_t, label)))/2.0

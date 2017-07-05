@@ -17,6 +17,7 @@ tf.app.flags.DEFINE_string('checkpoint_path', 'model', 'Directory path to save c
 
 tf.app.flags.DEFINE_boolean('train_continue', False, 'flag for continue training from previous checkpoint')
 tf.app.flags.DEFINE_boolean('valid_only', False, 'flag for validation only. this will make train_continue flag ignored')
+tf.app.flags.DEFINE_boolean('with_identity_loss', False, 'flag for using identity loss to fix unwilling color distortion')
 
 tf.app.flags.DEFINE_integer('batch_size', 1, 'mini-batch size for training')
 tf.app.flags.DEFINE_float('lr_disc', 2e-4, 'initial learning rate for discriminator')
@@ -36,7 +37,7 @@ class GanLearner:
     def __init__(self):
         self.sess = tf.Session()
         self.batch_size = FLAGS.batch_size
-        self.model = CycleGANModel(batch_size=self.batch_size)
+        self.model = CycleGANModel(batch_size=self.batch_size, with_identity_loss=FLAGS.with_identity_loss)
 
         self.train_loader = Loader(data_path=os.path.join(FLAGS.data_path, "train"), batch_size=self.batch_size)
         self.valid_loader = Loader(data_path=os.path.join(FLAGS.data_path, "valid"), batch_size=self.batch_size)
